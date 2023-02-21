@@ -1,0 +1,89 @@
+{
+    "port": "8080",
+    "routes": [
+        {
+            "name": "foo",
+            "path": "/foo",
+            "method": "GET",
+            "upstreams": [
+                {
+                    "url": "env:BAR_URL",
+                    "method": "GET",
+                    "headers": {
+                        "x-custom-header": "from foo"
+                    }
+                }
+            ],
+            "response": {
+                "headers": {
+                    "content-type": "application/json"
+                },
+                "status_code": 200,
+                "body": {
+                    "message": "hello from foo"
+                },
+                "concat_upstream_responses": true
+            }
+        },
+        {
+            "name": "bar",
+            "path": "/bar",
+            "method": "GET",
+            "upstreams": [
+                {
+                    "url": "env:FIZ_URL",
+                    "method": "GET"
+                }
+            ],
+            "response": {
+                "headers": {
+                    "content-type": "application/json"
+                },
+                "status_code": 200,
+                "body": {
+                    "message": "hello from bar"
+                },
+                "concat_upstream_responses": true
+            }
+        },
+        {
+            "name": "fizz",
+            "path": "/fizz",
+            "method": "GET",
+            "upstreams": [
+                {
+                    "url": "env:BUZ_URL",
+                    "method": "POST",
+                    "body": {
+                        "x": "y"
+                    }
+                }
+            ],
+            "response": {
+                "headers": {
+                    "content-type": "application/json"
+                },
+                "status_code": 200,
+                "body": {
+                    "message": "hello from fizz"
+                },
+                "concat_upstream_responses": true
+            }
+        },
+        {
+            "name": "buzz",
+            "path": "/buzz",
+            "method": "POST",
+            "response": {
+                "headers": {
+                    "content-type": "application/json"
+                },
+                "status_code": 200,
+                "body": {
+                    "message": "hello from buzz"
+                },
+                "concat_upstream_responses": true
+            }
+        }
+    ]
+}
