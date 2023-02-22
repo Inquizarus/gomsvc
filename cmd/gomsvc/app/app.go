@@ -6,7 +6,7 @@ import (
 
 	"github.com/inquizarus/gomsvc/pkg/logging"
 	"github.com/inquizarus/rwapper/v2"
-	"github.com/inquizarus/rwapper/v2/pkg/chiwrapper"
+	"github.com/inquizarus/rwapper/v2/pkg/servemuxwrapper"
 )
 
 func Run(router rwapper.RouterWrapper, log logging.Logger) {
@@ -28,7 +28,7 @@ func Run(router rwapper.RouterWrapper, log logging.Logger) {
 	}
 
 	if router == nil {
-		router = chiwrapper.New(nil)
+		router = servemuxwrapper.New(nil)
 	}
 
 	RegisterRoutes(config, router, log)

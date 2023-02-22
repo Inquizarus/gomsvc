@@ -2,61 +2,18 @@
     "port": "8080",
     "routes": [
         {
-            "name": "foo",
-            "path": "/foo",
+            "name": "init",
+            "path": "/init",
             "method": "GET",
             "upstreams": [
                 {
-                    "url": "env:BAR_URL",
-                    "method": "GET",
-                    "headers": {
-                        "x-custom-header": "from foo"
-                    }
-                }
-            ],
-            "response": {
-                "headers": {
-                    "content-type": "application/json"
-                },
-                "status_code": 200,
-                "body": {
-                    "message": "hello from foo"
-                },
-                "concat_upstream_responses": true
-            }
-        },
-        {
-            "name": "bar",
-            "path": "/bar",
-            "method": "GET",
-            "upstreams": [
-                {
-                    "url": "env:FIZ_URL",
-                    "method": "GET"
-                }
-            ],
-            "response": {
-                "headers": {
-                    "content-type": "application/json"
-                },
-                "status_code": 200,
-                "body": {
-                    "message": "hello from bar"
-                },
-                "concat_upstream_responses": true
-            }
-        },
-        {
-            "name": "fizz",
-            "path": "/fizz",
-            "method": "GET",
-            "upstreams": [
-                {
-                    "url": "env:BUZ_URL",
+                    "url": "env:UPSTREAM_URL",
                     "method": "POST",
-                    "body": {
-                        "x": "y"
-                    }
+                    "headers": {
+                        "x-custom-header": "from init",
+                        "content-type": "application/json"
+                    },
+                    "body":{}
                 }
             ],
             "response": {
@@ -65,24 +22,25 @@
                 },
                 "status_code": 200,
                 "body": {
-                    "message": "hello from fizz"
+                    "message": "hello from init"
                 },
                 "concat_upstream_responses": true
             }
         },
         {
-            "name": "buzz",
-            "path": "/buzz",
+            "name": "upstream",
+            "path": "/upstream",
             "method": "POST",
+            "upstreams": [],
             "response": {
                 "headers": {
                     "content-type": "application/json"
                 },
                 "status_code": 200,
                 "body": {
-                    "message": "hello from buzz"
+                    "message": "hello from upstream"
                 },
-                "concat_upstream_responses": true
+                "concat_upstream_responses": false
             }
         }
     ]
