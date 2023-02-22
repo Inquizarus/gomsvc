@@ -3,7 +3,9 @@ Small project to quickly create mock service endpoints from a json configuration
 
 ## Environment variables
 
-**GOMSVC_CONFIG_PATH**: set this to determine which json file is loaded. By default config.json in the same directory will be loaded.
+**GOMSVC_CONFIG_PATH**: set this to determine which json file is loaded. By default config.json in the same directory will be loaded unless `GOMSVC_CONFIG_STRING` is set.
+
+**GOMSVC_CONFIG_STRING**: set this with a valid JSON configuration that will be loaded. This has no effect if `GOMSVC_CONFIG_PATH` is set.
 
 **GOMSVC_LOG_LEVEL**: set this to determine which log level to use. By default `info` will be used.
 

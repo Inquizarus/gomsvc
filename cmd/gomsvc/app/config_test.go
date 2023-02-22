@@ -1,6 +1,7 @@
 package app_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/inquizarus/gomsvc/cmd/gomsvc/app"
@@ -24,4 +25,18 @@ func TestThatLoadConfigFromPathWorksAsIntended(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, "8081", config.Port)
+}
+
+func TestThatLoadConfigFromReaderWorksAsIntended(t *testing.T) {
+	dataString := `{"port":"8081"}`
+	config, err := app.ConfigFromReader(strings.NewReader(dataString))
+
+	assert.NoError(t, err)
+
+	assert.Equal(t, "8081", config.Port)
+}
+
+func TestThatLoadConfigFromReaderWorksAsIntendedWhenReaderIsNil(t *testing.T) {
+	_, err := app.ConfigFromReader(nil)
+	assert.Error(t, err)
 }

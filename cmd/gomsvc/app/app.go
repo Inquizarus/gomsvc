@@ -3,6 +3,7 @@ package app
 import (
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/inquizarus/gomsvc/pkg/logging"
 	"github.com/inquizarus/rwapper/v2"
@@ -15,13 +16,7 @@ func Run(router rwapper.RouterWrapper, log logging.Logger) {
 		log = logging.DefaultLogger
 	}
 
-	configPath := os.Getenv(envKeyConfigPath)
-
-	if configPath == "" {
-		configPath = configPathDefault
-	}
-
-	config, err := ConfigFromFilePath(configPath)
+	config, err := config()
 
 	if err != nil {
 		panic(err)
@@ -43,6 +38,22 @@ func Run(router rwapper.RouterWrapper, log logging.Logger) {
 	if err := server.ListenAndServe(); err != nil {
 		log.Info(err)
 	}
+}
+
+func config() (Config, error) {
+
+	configPath := os.Getenv(envKeyConfigPath)
+	configString := os.Getenv(envKeyConfigString)
+
+	if configPath == "" && configString == "" {
+		configPath = configPathDefault
+	}
+
+	if configPath == "" && configString != "" {
+		return ConfigFromReader(strings.NewReader(configString))
+	}
+
+	return ConfigFromFilePath(configPath)
 }
 
 func RegisterRoutes(config Config, router rwapper.RouterWrapper, log logging.Logger) {
