@@ -29,7 +29,7 @@ func MakeHandlerFunc(route Route, config Config, log logging.Logger) http.Handle
 				log.Info("error when performing upstream request " + err.Error() + ", skipping to next upstream call")
 				continue
 			}
-			if route.Response.ConcatUpstreamResponses {
+			if route.Response.IncludeUpstreamResponses {
 				upstreamResponses = append(upstreamResponses, upstreamResponse)
 			}
 		}
@@ -40,7 +40,7 @@ func MakeHandlerFunc(route Route, config Config, log logging.Logger) http.Handle
 
 		w.WriteHeader(route.Response.StatusCode)
 
-		data, err := route.Response.Content(upstreamResponses)
+		data, err := route.Response.Content(r, upstreamResponses)
 
 		if nil != err {
 			log.Error(err)

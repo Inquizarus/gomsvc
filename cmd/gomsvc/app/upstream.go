@@ -30,6 +30,11 @@ func (u Upstream) Call(client *http.Client) (*http.Response, error) {
 	}
 
 	request, err := http.NewRequest(u.method(), u.url(), body)
+
+	for k, v := range u.Headers {
+		request.Header.Set(k, v)
+	}
+
 	if err == nil {
 		return client.Do(request)
 	}

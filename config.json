@@ -24,7 +24,8 @@
                 "body": {
                     "message": "hello from init"
                 },
-                "concat_upstream_responses": true
+                "concat_upstream_responses": true,
+                "include_request_information": true
             }
         },
         {
@@ -40,7 +41,42 @@
                 "body": {
                     "message": "hello from upstream"
                 },
-                "concat_upstream_responses": false
+                "concat_upstream_responses": true,
+                "include_request_information": true
+            }
+        },
+        {
+            "name": "txt",
+            "path": "/txt",
+            "method": "GET",
+            "upstreams": [
+                {
+                    "url": "env:TXTUPSTREAM_URL",
+                    "method": "GET",
+                    "headers": {
+                        "x-custom-header": "from init"
+                    }
+                }
+            ],
+            "response": {
+                "headers": {},
+                "status_code": 200,
+                "body": "hello from txt",
+                "concat_upstream_responses": true,
+                "include_request_information": true
+            }
+        },
+        {
+            "name": "txtupstream",
+            "path": "/txtupstream",
+            "method": "GET",
+            "upstreams": [],
+            "response": {
+                "headers": {},
+                "status_code": 200,
+                "body": "hello from txtupstream",
+                "concat_upstream_responses": true,
+                "include_request_information": true
             }
         }
     ]

@@ -1,46 +1,82 @@
 package app
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 )
 
 type Response struct {
-	Headers                 map[string]string `json:"headers"`
-	StatusCode              int               `json:"status_code"`
-	Body                    interface{}       `json:"body"`
-	ConcatUpstreamResponses bool              `json:"concat_upstream_responses"`
+	Headers                   map[string]string `json:"headers"`
+	StatusCode                int               `json:"status_code"`
+	Body                      interface{}       `json:"body"`
+	IncludeUpstreamResponses  bool              `json:"concat_upstream_responses"`
+	IncludeRequestInformation bool              `json:"include_request_information"`
 }
 
-func (r Response) Content(upstreamResponses []*http.Response) ([]byte, error) {
+func (r Response) Content(request *http.Request, upstreamResponses []*http.Response) ([]byte, error) {
 
 	contentType, ok := r.Headers["content-type"]
 
 	if ok && contentType == "application/json" {
-		return r.json(upstreamResponses)
+		return r.json(request, upstreamResponses)
 	}
 
-	return r.text(upstreamResponses)
+	return r.text(request, upstreamResponses)
 }
 
-func (r Response) text(upstreamResponses []*http.Response) ([]byte, error) {
-	content := r.Body.(string)
+func (r Response) text(request *http.Request, upstreamResponses []*http.Response) ([]byte, error) {
+	content := ""
 
-	if len(upstreamResponses) > 0 && r.ConcatUpstreamResponses {
+	if r.shouldIncludeRequestInformation(request) {
+		content = content + `######################
+#   Request headers  #
+######################
+` + "\n"
+		for k, v := range request.Header {
+			content = content + k + ":" + strings.Join(v, ",") + "\n"
+		}
+	}
+
+	content = content + "\n--------------------------------------------------\n\n" + r.Body.(string)
+
+	if len(upstreamResponses) > 0 && r.IncludeUpstreamResponses {
+		content = content + "\n\n" + `
+#####################
+#   Upstream calls  #
+#####################
+` + "\n"
 		for _, upstreamResponse := range upstreamResponses {
 			upstreamData, _ := io.ReadAll(upstreamResponse.Body)
-			content = fmt.Sprintf("%s\n# %s %s\n%s", content, upstreamResponse.Status, upstreamResponse.Request.URL.String(), upstreamData)
+			content = fmt.Sprintf(
+				"%s\n\t%s - %s - %s\n\tFROM %s \n\n\t%s",
+				content,
+				upstreamResponse.Request.Method,
+				upstreamResponse.Request.URL.String(),
+				upstreamResponse.Status,
+				r.getClientIP(request),
+				bytes.ReplaceAll(upstreamData, []byte{'\n'}, []byte{'\n', '\t'}),
+			)
 		}
 	}
 
 	return []byte(content), nil
 }
 
-func (r Response) json(upstreamResponses []*http.Response) ([]byte, error) {
+func (r Response) json(request *http.Request, upstreamResponses []*http.Response) ([]byte, error) {
 	body := r.Body.(map[string]interface{})
-	if len(upstreamResponses) > 0 && r.ConcatUpstreamResponses {
+	if r.shouldIncludeRequestInformation(request) {
+
+		body["request"] = map[string]interface{}{
+			"client_ip": r.getClientIP(request),
+			"method":    request.Method,
+			"headers":   r.Headers,
+		}
+	}
+	if len(upstreamResponses) > 0 && r.IncludeUpstreamResponses {
 		upstreamContents := []interface{}{}
 		for _, upstreamResponse := range upstreamResponses {
 			upstreamData, _ := io.ReadAll(upstreamResponse.Body)
@@ -50,8 +86,10 @@ func (r Response) json(upstreamResponses []*http.Response) ([]byte, error) {
 					continue
 				}
 				upstreamContents = append(upstreamContents, map[string]interface{}{
-					"url":  upstreamResponse.Request.URL.String(),
-					"body": body,
+					"url":         upstreamResponse.Request.URL.String(),
+					"headers":     upstreamResponse.Header,
+					"status_code": upstreamResponse.StatusCode,
+					"body":        body,
 				})
 				continue
 			}
@@ -60,4 +98,18 @@ func (r Response) json(upstreamResponses []*http.Response) ([]byte, error) {
 		body["upstreams"] = upstreamContents
 	}
 	return json.Marshal(body)
+}
+
+func (r Response) shouldIncludeRequestInformation(request *http.Request) bool {
+	if r.IncludeRequestInformation || request.Header.Get(httpHeaderAddRequestHeadersInResponse) != "" {
+		return true
+	}
+	return false
+}
+
+func (r Response) getClientIP(request *http.Request) string {
+	if clientIP := request.Header.Get("X-Forwarded-For"); clientIP != "" {
+		return clientIP
+	}
+	return request.RemoteAddr
 }
