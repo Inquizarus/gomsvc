@@ -3,10 +3,13 @@ package app
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"strings"
+
+	"github.com/inquizarus/gomsvc/internal/pkg/httptools"
 )
 
 type Response struct {
@@ -19,6 +22,10 @@ type Response struct {
 
 func (r Response) Content(request *http.Request, upstreamResponses []*http.Response) ([]byte, error) {
 
+	if request == nil {
+		return nil, errors.New("request was nil")
+	}
+
 	contentType, ok := r.Headers["content-type"]
 
 	if ok && contentType == "application/json" {
@@ -29,67 +36,90 @@ func (r Response) Content(request *http.Request, upstreamResponses []*http.Respo
 }
 
 func (r Response) text(request *http.Request, upstreamResponses []*http.Response) ([]byte, error) {
-	content := ""
+	var buf bytes.Buffer
 
 	if r.shouldIncludeRequestInformation(request) {
-		content = content + `######################
-#   Request headers  #
-######################
-` + "\n"
+		buf.WriteString("######################\n")
+		buf.WriteString("#   Request headers  #\n")
+		buf.WriteString("######################\n\n")
+
+		var headerBuilder strings.Builder
 		for k, v := range request.Header {
-			content = content + k + ":" + strings.Join(v, ",") + "\n"
+			headerBuilder.Reset()
+			headerBuilder.WriteString(k)
+			headerBuilder.WriteString(":")
+			headerBuilder.WriteString(strings.Join(v, ","))
+			headerBuilder.WriteString("\n")
+			buf.WriteString(headerBuilder.String())
 		}
 	}
 
-	content = content + "\n--------------------------------------------------\n\n" + r.Body.(string)
+	buf.WriteString("\n--------------------------------------------------\n\n")
+	buf.WriteString(r.Body.(string))
+	buf.WriteString("\n\n--------------------------------------------------\n")
 
 	if len(upstreamResponses) > 0 && r.IncludeUpstreamResponses {
-		content = content + "\n\n" + `
-#####################
-#   Upstream calls  #
-#####################
-` + "\n"
+		buf.WriteString("\n#####################\n")
+		buf.WriteString("#   Upstream calls  #\n")
+		buf.WriteString("#####################\n\n")
+
 		for _, upstreamResponse := range upstreamResponses {
-			upstreamData, _ := io.ReadAll(upstreamResponse.Body)
-			content = fmt.Sprintf(
-				"%s\n\t%s - %s - %s\n\tFROM %s \n\n\t%s",
-				content,
+			if upstreamResponse == nil {
+				continue
+			}
+			upstreamData, err := io.ReadAll(upstreamResponse.Body)
+			if err != nil {
+				return nil, err
+			}
+
+			if httptools.IsJSON(upstreamResponse.Header) {
+				upstreamData, err = httptools.FormatJSONData(upstreamData)
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			buf.WriteString(fmt.Sprintf(
+				"\n\t%s - %s - %s\n\tFROM %s \n\n\t%s",
 				upstreamResponse.Request.Method,
 				upstreamResponse.Request.URL.String(),
 				upstreamResponse.Status,
-				r.getClientIP(request),
-				bytes.ReplaceAll(upstreamData, []byte{'\n'}, []byte{'\n', '\t'}),
-			)
+				httptools.ClientIP(request),
+				bytes.ReplaceAll(upstreamData, []byte{'\n'}, []byte{'\n', '\t'}), // Keeps everything indented
+			))
 		}
 	}
 
-	return []byte(content), nil
+	return buf.Bytes(), nil
 }
 
 func (r Response) json(request *http.Request, upstreamResponses []*http.Response) ([]byte, error) {
-	body := r.Body.(map[string]interface{})
+
+	body := r.copyBody()
+
 	if r.shouldIncludeRequestInformation(request) {
 
 		body["request"] = map[string]interface{}{
-			"client_ip": r.getClientIP(request),
+			"client_ip": httptools.ClientIP(request),
 			"method":    request.Method,
 			"headers":   r.Headers,
 		}
 	}
+
 	if len(upstreamResponses) > 0 && r.IncludeUpstreamResponses {
 		upstreamContents := []interface{}{}
 		for _, upstreamResponse := range upstreamResponses {
 			upstreamData, _ := io.ReadAll(upstreamResponse.Body)
-			if upstreamResponse.Header.Get("content-type") == "application/json" {
-				body := map[string]interface{}{}
-				if err := json.Unmarshal(upstreamData, &body); err != nil {
+			if httptools.IsJSON(upstreamResponse.Header) {
+				container := map[string]interface{}{}
+				if err := json.Unmarshal(upstreamData, &container); err != nil {
 					continue
 				}
 				upstreamContents = append(upstreamContents, map[string]interface{}{
 					"url":         upstreamResponse.Request.URL.String(),
 					"headers":     upstreamResponse.Header,
 					"status_code": upstreamResponse.StatusCode,
-					"body":        body,
+					"body":        container,
 				})
 				continue
 			}
@@ -97,7 +127,8 @@ func (r Response) json(request *http.Request, upstreamResponses []*http.Response
 		}
 		body["upstreams"] = upstreamContents
 	}
-	return json.Marshal(body)
+
+	return httptools.FormatJSON(body)
 }
 
 func (r Response) shouldIncludeRequestInformation(request *http.Request) bool {
@@ -107,9 +138,12 @@ func (r Response) shouldIncludeRequestInformation(request *http.Request) bool {
 	return false
 }
 
-func (r Response) getClientIP(request *http.Request) string {
-	if clientIP := request.Header.Get("X-Forwarded-For"); clientIP != "" {
-		return clientIP
+func (r Response) copyBody() map[string]interface{} {
+	body := map[string]interface{}{}
+
+	for k, v := range r.Body.(map[string]interface{}) {
+		body[k] = v
 	}
-	return request.RemoteAddr
+
+	return body
 }

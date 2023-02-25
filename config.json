@@ -2,15 +2,15 @@
     "port": "8080",
     "routes": [
         {
-            "name": "init",
-            "path": "/init",
+            "name": "json",
+            "path": "/json",
             "method": "GET",
             "upstreams": [
                 {
-                    "url": "env:UPSTREAM_URL",
+                    "url": "http://localhost:8080/jsonupstream",
                     "method": "POST",
                     "headers": {
-                        "x-custom-header": "from init",
+                        "x-custom-header": "from json",
                         "content-type": "application/json"
                     },
                     "body":{}
@@ -22,24 +22,23 @@
                 },
                 "status_code": 200,
                 "body": {
-                    "message": "hello from init"
+                    "message": "hello from json"
                 },
                 "concat_upstream_responses": true,
                 "include_request_information": true
             }
         },
         {
-            "name": "upstream",
-            "path": "/upstream",
+            "name": "jsonupstream",
+            "path": "/jsonupstream",
             "method": "POST",
-            "upstreams": [],
             "response": {
                 "headers": {
                     "content-type": "application/json"
                 },
                 "status_code": 200,
                 "body": {
-                    "message": "hello from upstream"
+                    "message": "hello from jsonupstream"
                 },
                 "concat_upstream_responses": true,
                 "include_request_information": true
@@ -51,15 +50,11 @@
             "method": "GET",
             "upstreams": [
                 {
-                    "url": "env:TXTUPSTREAM_URL",
-                    "method": "GET",
-                    "headers": {
-                        "x-custom-header": "from init"
-                    }
+                    "url": "http://localhost:8080/txtupstream",
+                    "method": "GET"
                 }
             ],
             "response": {
-                "headers": {},
                 "status_code": 200,
                 "body": "hello from txt",
                 "concat_upstream_responses": true,
@@ -70,9 +65,13 @@
             "name": "txtupstream",
             "path": "/txtupstream",
             "method": "GET",
-            "upstreams": [],
+            "upstreams": [
+                {
+                    "url": "http://localhost:8080/json",
+                    "method": "GET"
+                }
+            ],
             "response": {
-                "headers": {},
                 "status_code": 200,
                 "body": "hello from txtupstream",
                 "concat_upstream_responses": true,
