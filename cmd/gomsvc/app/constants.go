@@ -3,6 +3,7 @@ package app
 const (
 	envKeyConfigPath   = "GOMSVC_CONFIG_PATH"
 	envKeyConfigString = "GOMSVC_CONFIG_STRING"
+	envKeyRoutesDir    = "GOMSVC_ROUTES_DIR"
 	configPathDefault  = "config.json"
 	defaultPort        = "8080"
 

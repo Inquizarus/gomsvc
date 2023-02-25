@@ -45,5 +45,35 @@ func ConfigFromReader(r io.Reader) (Config, error) {
 
 	err = json.Unmarshal(data, &config)
 
+	if err == nil {
+		routes, err := LoadRoutesFromDir()
+		if err == nil {
+			config.Routes = append(config.Routes, routes...)
+		}
+	}
 	return config, err
+}
+
+func LoadRoutesFromDir() ([]Route, error) {
+	routes := []Route{}
+	dir := os.Getenv(envKeyRoutesDir)
+	if dir != "" {
+		entries, err := os.ReadDir(dir)
+		if err != nil {
+			return nil, err
+		}
+		for _, file := range entries {
+			data, err := os.ReadFile(dir + "/" + file.Name())
+			if err != nil {
+				return nil, err
+			}
+			route := Route{}
+			err = json.Unmarshal(data, &route)
+			if err != nil {
+				return nil, err
+			}
+			routes = append(routes, route)
+		}
+	}
+	return routes, nil
 }
