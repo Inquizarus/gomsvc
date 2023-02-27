@@ -24,8 +24,8 @@
                 "body": {
                     "message": "hello from json"
                 },
-                "concat_upstream_responses": true,
-                "include_request_information": true
+                "concat_upstream_responses": false,
+                "include_request_information": false
             }
         },
         {
@@ -40,8 +40,8 @@
                 "body": {
                     "message": "hello from jsonupstream"
                 },
-                "concat_upstream_responses": true,
-                "include_request_information": true
+                "concat_upstream_responses": false,
+                "include_request_information": false
             }
         },
         {
@@ -57,8 +57,8 @@
             "response": {
                 "status_code": 200,
                 "body": "hello from txt",
-                "concat_upstream_responses": true,
-                "include_request_information": true
+                "concat_upstream_responses": false,
+                "include_request_information": false
             }
         },
         {
@@ -74,8 +74,8 @@
             "response": {
                 "status_code": 200,
                 "body": "hello from txtupstream",
-                "concat_upstream_responses": true,
-                "include_request_information": true
+                "concat_upstream_responses": false,
+                "include_request_information": false
             }
         }
     ]

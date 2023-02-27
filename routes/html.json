@@ -1,0 +1,12 @@
+{
+    "name": "html",
+    "path": "/html",
+    "method": "GET",
+    "response": {
+        "headers": {
+            "content-type": "text/html; charset=UTF-8"
+        },
+        "status_code": 200,
+        "body": "<!DOCTYPE html>\n<html>\n<head>\n\t<meta charset='utf-8'>\n\t<meta http-equiv='X-UA-Compatible' content='IE=edge'>\n\t<title>Page Title</title>\n\t<meta name='viewport' content='width=device-width, initial-scale=1'>\n</head>\n<body>\n\t<p>this is a body paragraph.</p>\n</body>\n</html>"
+    }
+}

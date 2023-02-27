@@ -54,9 +54,7 @@ func (r Response) text(request *http.Request, upstreamResponses []*http.Response
 		}
 	}
 
-	buf.WriteString("\n--------------------------------------------------\n\n")
 	buf.WriteString(r.Body.(string))
-	buf.WriteString("\n\n--------------------------------------------------\n")
 
 	if len(upstreamResponses) > 0 && r.IncludeUpstreamResponses {
 		buf.WriteString("\n#####################\n")
