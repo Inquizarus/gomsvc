@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/inquizarus/gomsvc/internal/pkg/httptools"
@@ -54,7 +55,17 @@ func (r Response) text(request *http.Request, upstreamResponses []*http.Response
 		}
 	}
 
-	buf.WriteString(r.Body.(string))
+	body := r.Body.(string)
+
+	if strings.HasPrefix(body, "file:") {
+		data, err := os.ReadFile(strings.TrimPrefix(body, "file:"))
+		if err != nil {
+			return nil, err
+		}
+		body = string(data)
+	}
+
+	buf.WriteString(body)
 
 	if len(upstreamResponses) > 0 && r.IncludeUpstreamResponses {
 		buf.WriteString("\n#####################\n")
@@ -96,7 +107,6 @@ func (r Response) json(request *http.Request, upstreamResponses []*http.Response
 	body := r.copyBody()
 
 	if r.shouldIncludeRequestInformation(request) {
-
 		body["request"] = map[string]interface{}{
 			"client_ip": httptools.ClientIP(request),
 			"method":    request.Method,
