@@ -1,0 +1,25 @@
+{
+    "name": "json",
+    "path": "/json",
+    "method": "GET",
+    "upstreams": [
+        {
+            "url": "http://localhost:8080/jsoninline",
+            "method": "POST",
+            "headers": {
+                "x-custom-header": "from json",
+                "content-type": "application/json"
+            },
+            "body":{}
+        }
+    ],
+    "response": {
+        "headers": {
+            "content-type": "application/json"
+        },
+        "status_code": 200,
+        "body": {
+            "message": "hello from json"
+        }
+    }
+}

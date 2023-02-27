@@ -53,11 +53,12 @@ func (r Response) text(request *http.Request, upstreamResponses []*http.Response
 			headerBuilder.WriteString("\n")
 			buf.WriteString(headerBuilder.String())
 		}
+		buf.WriteString("\n")
 	}
 
 	body := r.Body.(string)
 
-	if strings.HasPrefix(body, "file:") {
+	if strings.HasPrefix(body, "file:") { // TODO: DRY this
 		data, err := os.ReadFile(strings.TrimPrefix(body, "file:"))
 		if err != nil {
 			return nil, err
@@ -67,10 +68,10 @@ func (r Response) text(request *http.Request, upstreamResponses []*http.Response
 
 	buf.WriteString(body)
 
-	if len(upstreamResponses) > 0 && r.IncludeUpstreamResponses {
-		buf.WriteString("\n#####################\n")
+	if r.includeUpstreamResponses(request, upstreamResponses) {
+		buf.WriteString("\n\n#####################\n")
 		buf.WriteString("#   Upstream calls  #\n")
-		buf.WriteString("#####################\n\n")
+		buf.WriteString("#####################\n")
 
 		for _, upstreamResponse := range upstreamResponses {
 			if upstreamResponse == nil {
@@ -110,11 +111,11 @@ func (r Response) json(request *http.Request, upstreamResponses []*http.Response
 		body["request"] = map[string]interface{}{
 			"client_ip": httptools.ClientIP(request),
 			"method":    request.Method,
-			"headers":   r.Headers,
+			"headers":   request.Header,
 		}
 	}
 
-	if len(upstreamResponses) > 0 && r.IncludeUpstreamResponses {
+	if r.includeUpstreamResponses(request, upstreamResponses) {
 		upstreamContents := []interface{}{}
 		for _, upstreamResponse := range upstreamResponses {
 			upstreamData, _ := io.ReadAll(upstreamResponse.Body)
@@ -146,12 +147,28 @@ func (r Response) shouldIncludeRequestInformation(request *http.Request) bool {
 	return false
 }
 
-func (r Response) copyBody() map[string]interface{} {
-	body := map[string]interface{}{}
+func (r Response) includeUpstreamResponses(req *http.Request, upstreamResponses []*http.Response) bool {
+	return len(upstreamResponses) > 0 && (r.IncludeUpstreamResponses || req.Header.Get(httpHeaderAddUpstreamsInResponse) != "")
+}
 
-	for k, v := range r.Body.(map[string]interface{}) {
-		body[k] = v
+func (r Response) copyBody() map[string]interface{} {
+
+	body := r.Body
+	container := map[string]interface{}{}
+
+	if s, ok := body.(string); ok {
+		if strings.HasPrefix(s, "file:") { // TODO: DRY this
+			data, _ := os.ReadFile(strings.TrimPrefix(s, "file:"))
+			json.Unmarshal(data, &container)
+			return container
+		}
+		json.Unmarshal([]byte(s), &container)
+		return container
 	}
 
-	return body
+	for k, v := range r.Body.(map[string]interface{}) {
+		container[k] = v
+	}
+
+	return container
 }

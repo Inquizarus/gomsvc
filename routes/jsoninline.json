@@ -1,0 +1,12 @@
+{
+    "name": "jsoninline",
+    "path": "/jsoninline",
+    "method": "POST",
+    "response": {
+        "headers": {
+            "content-type": "application/json"
+        },
+        "status_code": 200,
+        "body": "{\"foo\":\"bar\"}"
+    }
+}

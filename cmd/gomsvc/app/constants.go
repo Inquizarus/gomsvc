@@ -8,4 +8,5 @@ const (
 	defaultPort        = "8080"
 
 	httpHeaderAddRequestHeadersInResponse = "X-GOMSVC-Add-Request-Headers-In-Response"
+	httpHeaderAddUpstreamsInResponse      = "X-GOMSVC-Add-Upstreams-In-Response"
 )

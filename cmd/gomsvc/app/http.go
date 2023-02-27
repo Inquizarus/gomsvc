@@ -29,9 +29,8 @@ func MakeHandlerFunc(route Route, config Config, log logging.Logger) http.Handle
 				log.Info("error when performing upstream request " + err.Error() + ", skipping to next upstream call")
 				continue
 			}
-			if route.Response.IncludeUpstreamResponses {
-				upstreamResponses = append(upstreamResponses, upstreamResponse)
-			}
+			upstreamResponses = append(upstreamResponses, upstreamResponse)
+
 		}
 
 		for k, v := range route.Response.Headers {
