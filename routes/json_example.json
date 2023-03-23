@@ -1,0 +1,14 @@
+{
+  "name": "json example",
+  "path": "/mock/example",
+  "method": "GET",
+  "response": {
+      "headers": {
+          "content-type": "application/json"
+      },
+      "status_code": 200,
+      "body": {
+          "message": "hello from example"
+      }
+  }
+}

@@ -1,6 +1,6 @@
 {
     "name": "example",
-    "path": "/example",
+    "path": "/api/example",
     "method": "GET",
     "response": {
         "headers": {
@@ -9,6 +9,7 @@
         "status_code": 200,
         "body": {
             "message": "hello from example"
-        }
+        },
+        "include_request_information": true
     }
 }

@@ -13,6 +13,9 @@ docker_build_github:
 	test -n "$(tag)"
 	podman build -t ghcr.io/inquizarus/gomsvc:$(tag) .
 
+run_local_cmd:
+	GOMSVC_CONFIG_PATH="./config.json" GOMSVC_ROUTES_DIR="./routes" go run cmd/gomsvc/main.go
+
 docker_push_github:
 	test -n "$(tag)"
 	podman push ghcr.io/inquizarus/gomsvc:$(tag)
