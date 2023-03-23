@@ -24,7 +24,7 @@ func MakeHandlerFunc(route Route, config Config, log logging.Logger) http.Handle
 
 		upstreamResponses := []*http.Response{}
 		for _, upstream := range route.Upstreams {
-			upstreamResponse, err := upstream.Call(http.DefaultClient)
+			upstreamResponse, err := upstream.Call(http.DefaultClient, r)
 			if err != nil {
 				log.Info("error when performing upstream request " + err.Error() + ", skipping to next upstream call")
 				continue

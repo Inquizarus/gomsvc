@@ -35,7 +35,7 @@ func TestThatPlainTextUpstreamPostWorksAsIntended(t *testing.T) {
 		Body:   expectedBody,
 	}
 
-	upstream.Call(client)
+	upstream.Call(client, nil)
 
 	assert.True(t, called)
 }
@@ -69,7 +69,68 @@ func TestThatJSONUpstreamPostWorksAsIntended(t *testing.T) {
 		Body: expectedBody,
 	}
 
-	upstream.Call(client)
+	upstream.Call(client, nil)
+
+	assert.True(t, called)
+}
+
+func TestThatUpstreamCallIncludeRequestHeadersIfSupposedToo(t *testing.T) {
+	router := servemuxwrapper.New(nil)
+	called := false
+
+	headerKey := "x-extra-header"
+	headerValue := "foobar"
+
+	router.Handle(http.MethodPost, "/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		called = true
+		assert.Equal(t, headerValue, r.Header.Get(headerKey))
+	}))
+
+	server := httptest.NewServer(router)
+
+	client := server.Client()
+
+	upstream := app.Upstream{
+		URL:                   server.URL,
+		Method:                http.MethodPost,
+		IncludeRequestHeaders: true,
+		Body:                  "",
+	}
+
+	r := httptest.NewRequest(http.MethodGet, "http://localhost", nil)
+	r.Header.Set(headerKey, headerValue)
+
+	upstream.Call(client, r)
+
+	assert.True(t, called)
+}
+
+func TestThatUpstreamCallExcludeRequestHeadersIfSupposedToo(t *testing.T) {
+	router := servemuxwrapper.New(nil)
+	called := false
+
+	headerKey := "x-extra-jeader"
+	headerValue := ""
+
+	router.Handle(http.MethodPost, "/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		called = true
+		assert.Equal(t, headerValue, r.Header.Get(headerKey))
+	}))
+
+	server := httptest.NewServer(router)
+
+	client := server.Client()
+
+	upstream := app.Upstream{
+		URL:    server.URL,
+		Method: http.MethodPost,
+		Body:   "",
+	}
+
+	r := httptest.NewRequest(http.MethodGet, "http://localhost", nil)
+	r.Header.Set(headerKey, headerValue)
+
+	upstream.Call(client, r)
 
 	assert.True(t, called)
 }

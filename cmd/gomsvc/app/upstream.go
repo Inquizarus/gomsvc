@@ -11,17 +11,18 @@ import (
 )
 
 type Upstream struct {
-	URL     string            `json:"url"`
-	Headers map[string]string `json:"headers"`
-	Method  string            `json:"method"`
-	Body    interface{}       `json:"body"`
+	URL                   string            `json:"url"`
+	IncludeRequestHeaders bool              `json:"include_request_headers"`
+	Headers               map[string]string `json:"headers"`
+	Method                string            `json:"method"`
+	Body                  interface{}       `json:"body"`
 }
 
 // Call takes all the information in the upstream and makes a request
 // based on that. URL with a value that has a env: prefix will instead use
 // whatever value is in that environment variable as an URL instead for
 // the upstream call
-func (u Upstream) Call(client *http.Client) (*http.Response, error) {
+func (u Upstream) Call(client *http.Client, req *http.Request) (*http.Response, error) {
 
 	body, err := u.body()
 
@@ -30,6 +31,14 @@ func (u Upstream) Call(client *http.Client) (*http.Response, error) {
 	}
 
 	request, err := http.NewRequest(u.method(), u.url(), body)
+
+	if u.IncludeRequestHeaders && req != nil {
+		for name, values := range req.Header {
+			for _, v := range values {
+				request.Header.Add(name, v)
+			}
+		}
+	}
 
 	for k, v := range u.Headers {
 		request.Header.Set(k, v)

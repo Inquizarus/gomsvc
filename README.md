@@ -31,6 +31,8 @@ Small project to quickly create mock service endpoints from a json configuration
 
 **routes[].upstreams[].body**: String or object that is sent whenever the upstream call is using HTTP Method POST or PUT.
 
+**routes[].upstreams[].include_request_headers**: Determines if http headers should be copied from incoming request to upstream request.
+
 **routes[].response.headers{}**: Object with key:value sets that are attached as headers for the route response. Setting `content-type` to `json/application` will trigger the body will be encoded as JSON before being served.
 
 **routes[].response.body**: String or object that is returned as response body.
