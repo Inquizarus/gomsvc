@@ -10,7 +10,8 @@
                 "x-custom-header": "from json",
                 "content-type": "application/json"
             },
-            "body":{}
+            "body":{},
+            "include_request_headers": true
         }
     ],
     "response": {
